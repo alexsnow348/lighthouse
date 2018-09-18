@@ -68,6 +68,13 @@ class Driver {
      */
     this._monitoredUrl = null;
 
+    /**
+     * @type {LH.Trace}
+     */
+    this._traceEvents = {
+      traceEvents: [],
+    };
+
     connection.on('protocolevent', event => {
       this._devtoolsLog.record(event);
       if (this._networkStatusMonitor) {
@@ -929,11 +936,15 @@ class Driver {
       throw new Error('DOM domain enabled when starting trace');
     }
 
+    // setup listener to listen for when trace a data bundle is collected
+    this.on('Tracing.dataCollected', data => {
+      this._traceEvents.traceEvents.push(...data.value);
+    });
+
     // Enable Page domain to wait for Page.loadEventFired
     return this.sendCommand('Page.enable')
       .then(_ => this.sendCommand('Tracing.start', {
         categories: uniqueCategories.join(','),
-        transferMode: 'ReturnAsStream',
         options: 'sampling-frequency=10000', // 1000 is default and too slow.
       }));
   }
@@ -943,10 +954,8 @@ class Driver {
    */
   endTrace() {
     return new Promise((resolve, reject) => {
-      // When the tracing has ended this will fire with a stream handle.
-      this.once('Tracing.tracingComplete', completeEvent => {
-        this._readTraceFromStream(completeEvent)
-            .then(traceContents => resolve(traceContents), reject);
+      this.once('Tracing.tracingComplete', _ => {
+        resolve(this._traceEvents);
       });
 
       // Issue the command to stop tracing.
