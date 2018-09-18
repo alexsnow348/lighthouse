@@ -96,28 +96,46 @@ class DOMSize extends Audit {
     );
 
     const headings = [
-      {key: 'totalNodes', itemType: 'text', text: str_(UIStrings.columnDOMNodes)},
-      {key: 'depth', itemType: 'text', text: str_(UIStrings.columnDOMDepth)},
-      {key: 'width', itemType: 'text', text: str_(UIStrings.columnDOMWidth)},
+      // TODO i18n new UI text
+      {key: 'category', itemType: 'text', text: 'Category'},
+      {key: 'element', itemType: 'code', text: 'Element'},
+      {key: 'observed', itemType: 'text', text: 'Count'},
     ];
+
+    // get identifying snippet parts
+    const divMatcher = /<(\S+).*>/;
+    const identifierMatcher = /(id="\S+"|class="\S+")/;
+
+    const depthNode = divMatcher.exec(stats.depth.snippet);
+    const dIdentifier = identifierMatcher.exec(stats.depth.snippet);
+
+    const widthNode = divMatcher.exec(stats.width.snippet);
+    const wIdentifier = identifierMatcher.exec(stats.width.snippet);
 
     /** @type {Array<Object<string, LH.Audit.DetailsItem>>} */
     const items = [
       {
-        totalNodes: Util.formatNumber(stats.totalDOMNodes),
-        depth: Util.formatNumber(stats.depth.max),
-        width: Util.formatNumber(stats.width.max),
+        category: 'Total DOM Nodes',
+        element: '',
+        observed: Util.formatNumber(stats.totalDOMNodes),
       },
       {
-        totalNodes: '',
-        depth: {
+        category: 'Max Depth',
+        element: {
           type: 'code',
-          value: stats.depth.snippet,
+          value: '<' + (depthNode !== null? depthNode[1]: '') +
+            (dIdentifier !== null? ' ' + dIdentifier[1]: '') + '>',
         },
-        width: {
+        observed: Util.formatNumber(stats.depth.max),
+      },
+      {
+        category: 'Max Children',
+        element: {
           type: 'code',
-          value: stats.width.snippet,
+          value: '<' + (widthNode !== null? widthNode[1]: '') +
+            (wIdentifier !== null? ' ' + wIdentifier[1]: '') + '>',
         },
+        observed: Util.formatNumber(stats.width.max),
       },
     ];
 
