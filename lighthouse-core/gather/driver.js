@@ -936,7 +936,7 @@ class Driver {
       throw new Error('DOM domain enabled when starting trace');
     }
 
-    // setup listener to listen for when trace a data bundle is collected
+    // setup listener for when a trace bundle is sent
     this.on('Tracing.dataCollected', data => {
       this._traceEvents.traceEvents.push(...data.value);
     });
